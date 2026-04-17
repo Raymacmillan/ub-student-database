@@ -85,4 +85,4 @@ Register an account, then log in to access the dashboard.
 
 ## Author
 
-Ray Macmillan — University of Botswana, BSc Computer Science
+Ray McMillan Gumbo — University of Botswana, BSc Computer Science
