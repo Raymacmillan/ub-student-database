@@ -32,15 +32,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
     }
 
     elseif ($_POST['action'] === 'update') {
-        $id   = trim($_POST['id']);
-        $name = trim($_POST['name']);
+        $original_id = trim($_POST['original_id']);
+        $new_id      = trim($_POST['id']);
+        $name        = trim($_POST['name']);
 
-        if (empty($name)) {
-            header("Location: manage_database.php?msg=Name+cannot+be+empty&type=danger");
+        if (empty($new_id) || empty($name)) {
+            header("Location: manage_database.php?msg=ID+and+Name+cannot+be+empty&type=danger");
         } else {
-            $stmt = $db->prepare("UPDATE test SET name = ? WHERE id = ?");
-            $stmt->execute([$name, $id]);
-            header("Location: manage_database.php?msg=Record+updated+successfully&type=success");
+            try {
+                $stmt = $db->prepare("UPDATE test SET id = ?, name = ? WHERE id = ?");
+                $stmt->execute([$new_id, $name, $original_id]);
+                header("Location: manage_database.php?msg=Record+updated+successfully&type=success");
+            } catch (PDOException $e) {
+                header("Location: manage_database.php?msg=Error:+Student+ID+already+exists&type=danger");
+            }
         }
         exit;
     }
@@ -81,7 +86,7 @@ if ($edit_id) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Students</title>
+    <title>Manage Students — UB Database</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -92,6 +97,7 @@ if ($edit_id) {
         Student Database
     </div>
     <div class="navbar-links">
+        <span class="user-tag">Logged in as <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong></span>
         <a href="logout.php" class="btn-logout">Logout</a>
     </div>
 </nav>
@@ -122,6 +128,9 @@ if ($edit_id) {
                 <div class="card-body">
                     <form action="manage_database.php" method="POST">
                         <input type="hidden" name="action" value="<?php echo $edit_student ? 'update' : 'create'; ?>">
+                        <?php if ($edit_student): ?>
+                            <input type="hidden" name="original_id" value="<?php echo htmlspecialchars($edit_student['id']); ?>">
+                        <?php endif; ?>
 
                         <div class="form-group">
                             <label>Student ID</label>
@@ -131,7 +140,6 @@ if ($edit_id) {
                                 maxlength="15"
                                 placeholder="e.g. 20010001"
                                 value="<?php echo $edit_student ? htmlspecialchars($edit_student['id']) : ''; ?>"
-                                <?php echo $edit_student ? 'readonly' : ''; ?>
                             >
                         </div>
 
